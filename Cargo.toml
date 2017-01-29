@@ -1,0 +1,10 @@
+[package]
+name = "speech_auth"
+version = "0.1.0"
+authors = ["anon8112 <anon8112dev@gmail.com>"]
+
+[dependencies]
+hyper = "*"
+hyper-native-tls = "*"
+redis = "*"
+rustc-serialize = "*"
