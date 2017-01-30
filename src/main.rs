@@ -3,17 +3,17 @@
 extern crate hyper_native_tls;
 extern crate redis;
 
+extern crate ms_speaker_recog;
 extern crate rustc_serialize;
 
 pub mod db;
-pub mod api;
 pub mod ctrl;
 
 fn main() {
     let api_key = include_str!("../api.txt"); 
-    let api = api::Api::init(api_key);
+    let client = ms_speaker_recog::Client::new(api_key, 0);
     let db = db::Db::new("speech_auth");
-    let ctrl = ctrl::Ctrl::new(api, db);
+    let ctrl = ctrl::Ctrl::new(client, db);
     ctrl.identify();
 }
 

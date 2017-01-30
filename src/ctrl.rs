@@ -1,40 +1,28 @@
 use db::Db;
-use api::Api;
-use rustc_serialize::json::Json;
 
 use std::{time, thread};
+use ms_speaker_recog::Client;
 
 pub struct Ctrl {
-    db: Db,
-    api: Api
+    api: Client,
+    db: Db
 }
 
 impl Ctrl {
-    pub fn new(api: Api, db: Db) -> Ctrl {
+    pub fn new(api: Client, db: Db) -> Ctrl {
         Ctrl{api:api, db:db}
     }
-    pub fn get_id(&self, id: &str) -> String {
-        let res = &self.api.get_status(id).unwrap();
-        let json = Json::from_str(&res).unwrap();
-        let obj = json.as_object().unwrap();
-        let r = obj.get("processingResult").unwrap();
-        let id = r.as_object().unwrap().get("identifiedProfileId").unwrap();
-        id.as_string().unwrap().into()
-    }
+    
     pub fn identify(&self) {
         let file = include_bytes!("../data/max/max_hello1.wav");
         let ids = &self.db.get_ids().unwrap();
-        let res = self.api.identify(ids, file);
-        let s = match res {
+        let res = self.api.identify(ids, file, true);
+        let id = match res {
             Ok(res) => res,
-            Err(err) => format!("{}",err)
+            Err(err) => format!("{}", err.message)
         };
-        let base = "https://westus.api.cognitive.microsoft.com/spid/v1.0/operations/";
-        println!("{}", s);
-        let (_, status_id) = s.split_at(base.len());
-        let one_sec = time::Duration::from_secs(1);
-        thread::sleep(one_sec);
-        let id = self.get_id(status_id);
+        thread::sleep(time::Duration::from_secs(2));
+        let id = self.api.get_operation_status_id(&id).unwrap();
         let name = match self.db.get(&id){
             Ok(name) => name,
             Err(err) => format!("{}", err)
@@ -42,12 +30,12 @@ impl Ctrl {
         println!("User {} is talking", name);
     }
     pub fn register(&self, name: &str) {
-        let id = self.api.create_profile().unwrap();
+        let id = self.api.create_profile("en-us").unwrap();
         let _ = self.db.save(&id, name).unwrap();
         let _ = self.db.set(&self.db.key_name(name), &id).unwrap();
         
         let file = include_bytes!("../data/max/max1.wav");
-        let res = self.api.enroll(&id, file).unwrap();
+        let res = self.api.create_enrollment(&id, file, false).unwrap();
         println!("{}", res);
 
     }

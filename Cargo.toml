@@ -8,3 +8,4 @@ hyper = "*"
 hyper-native-tls = "*"
 redis = "*"
 rustc-serialize = "*"
+ms_speaker_recog = { path = "../ms_speaker_recog", version = "*" }
